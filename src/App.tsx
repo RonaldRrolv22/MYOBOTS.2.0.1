@@ -154,15 +154,13 @@ export default function App() {
     } else if (name === 'number') {
       if (!value) error = 'Número é obrigatório';
       else if (/[^\d]/.test(value)) error = 'O campo número deve conter apenas números';
-    } else if (!value && name !== 'selectedMonth') {
+    } else if (!value && name !== 'selectedMonth' && name !== 'complement' && name !== 'observations') {
       const labels: Record<string, string> = {
         name: 'Nome',
         street: 'Logradouro',
         neighborhood: 'Bairro',
         city: 'Cidade',
-        state: 'Estado',
-        complement: 'Complemento',
-        observations: 'Observações'
+        state: 'Estado'
       };
       error = `${labels[name] || 'Campo'} é obrigatório`;
     }
