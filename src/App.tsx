@@ -141,12 +141,25 @@ export default function App() {
     let error = '';
     if (name === 'email') {
       const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!value) error = 'Obrigatório';
-      else if (!regex.test(value)) error = 'Email inválido';
-    } else if (name === 'clientPhone') {
-      if (!value) error = 'Obrigatório';
-    } else if (!value && name !== 'complement' && name !== 'observations' && name !== 'selectedMonth') {
-      error = 'Campo obrigatório';
+      if (!value) error = 'Email é obrigatório';
+      else if (!regex.test(value)) error = 'Formato de email inválido';
+    } else if (name === 'zipCode') {
+      const cleanCep = value.replace(/\D/g, '');
+      if (!value) error = 'CEP é obrigatório';
+      else if (cleanCep.length !== 8) error = 'O CEP deve conter exatamente 8 números';
+    } else if (!value && name !== 'selectedMonth') {
+      const labels: Record<string, string> = {
+        name: 'Nome',
+        clientPhone: 'WhatsApp',
+        street: 'Logradouro',
+        number: 'Número',
+        neighborhood: 'Bairro',
+        city: 'Cidade',
+        state: 'Estado',
+        complement: 'Complemento',
+        observations: 'Observações'
+      };
+      error = `${labels[name] || 'Campo'} é obrigatório`;
     }
     return error;
   };
@@ -237,6 +250,29 @@ export default function App() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      
+      // Detailed alert for user
+      const missingFields = Object.keys(newErrors).map(key => {
+        if (key.startsWith('serialNumber_')) return 'Número de série (Equipamento ' + (parseInt(key.split('_')[1]) + 1) + ')';
+        const labels: Record<string, string> = {
+          name: 'Nome',
+          clientPhone: 'WhatsApp',
+          email: 'Email',
+          street: 'Logradouro',
+          number: 'Número',
+          neighborhood: 'Bairro',
+          city: 'Cidade',
+          state: 'Estado',
+          zipCode: 'CEP',
+          selectedMonth: 'Mês de Agendamento',
+          complement: 'Complemento',
+          observations: 'Observações'
+        };
+        return labels[key] || key;
+      });
+      
+      alert(`Por favor, preencha corretamente os seguintes campos:\n\n• ${missingFields.join('\n• ')}`);
+
       // Scroll to first error
       const firstError = Object.keys(newErrors)[0];
       const el = document.getElementsByName(firstError)[0] || document.getElementById(firstError);
@@ -475,7 +511,7 @@ export default function App() {
                             <div>
                               <p className="font-bold text-[#1A1A1A] uppercase text-[10px] tracking-widest mb-1">Autorização de Envio</p>
                               <p className="text-sm text-[#6B6B6B] font-light leading-relaxed">
-                                Após o preenchimento do formulário, você receberá sua autorização em <strong className="text-[#1A1A1A] font-medium">até 1 dia útil</strong>.
+                                Após o preenchimento do formulário, o seu agendamento estará concluído com sucesso. Uma semana antes do mês selecionado, você receberá sua autorização de envio para pagamento.
                               </p>
                             </div>
                           </div>
@@ -523,7 +559,7 @@ export default function App() {
                                 <span className="bg-white text-[#6B6B6B] text-[9px] font-bold px-2 py-1 rounded-full uppercase border border-gray-100">8 Dias Úteis</span>
                               </div>
                               <p className="text-xs text-[#6B6B6B] font-light leading-relaxed">
-                                Equipamentos postados fora da data de validade da autorização serão retidos em quarentena.
+                                Equipamentos postados fora da data de validade da autorização serão retidos até nova liberação.
                               </p>
                             </div>
                           </div>
@@ -910,9 +946,9 @@ export default function App() {
                     <div className="w-16 h-16 rounded-3xl bg-green-50 shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform border border-green-100">
                       <MessageSquare className="w-8 h-8 text-green-600" />
                     </div>
-                    <h5 className="font-display font-black text-gray-800 text-lg mb-2">Suporte Técnico</h5>
+                    <h5 className="font-display font-display font-black text-gray-800 text-lg mb-2">Suporte Técnico</h5>
                     <p className="text-sm text-gray-400 mb-8 font-medium leading-relaxed">
-                      Dúvidas sobre o número de série ou processo de envio? Nosso time está online.
+                      Dúvidas sobre o número de série ou processo de envio? Entre em contato com nosso time.
                     </p>
                     <a
                       href="https://api.whatsapp.com/send/?phone=5581982615413&text&type=phone_number&app_absent=0"
