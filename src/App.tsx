@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useMemo, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { supabase } from './lib/supabase';
 import SerialNumberGuide from './components/SerialNumberGuide';
 import FreteCalculator from './components/FreteCalculator';
 import { 
@@ -100,31 +99,21 @@ export default function App() {
     }
   }, [showForm]);
 
-  // Fetch monthly capacities from Supabase
+  // Fetch monthly capacities from backend
   useEffect(() => {
     const fetchCapacities = async () => {
-      const { data, error } = await supabase
-        .from('firmware_requests')
-        .select('selected_month, serial_numbers');
-      
-      if (error) {
-        console.error('Error fetching capacities:', error);
-        return;
-      }
-      
-      if (data) {
-        const counts = data.reduce((acc: Record<string, number>, curr) => {
-          if (curr.selected_month) {
-            const numSerials = Array.isArray(curr.serial_numbers) ? curr.serial_numbers.length : 1;
-            acc[curr.selected_month] = (acc[curr.selected_month] || 0) + numSerials;
-          }
-          return acc;
-        }, {});
+      try {
+        const response = await fetch('/api/capacities');
+        if (!response.ok) throw new Error('Falha ao buscar capacidades');
+        
+        const counts = await response.json();
         
         setMonths(prev => prev.map(m => ({
           ...m,
           count: counts[m.label] || 0
         })));
+      } catch (error) {
+        console.error('Error fetching capacities:', error);
       }
     };
     
@@ -263,52 +252,38 @@ export default function App() {
 
     setIsSubmitting(true);
     
-    // Check if any serial number already exists
-    const { data: existingSerials, error: serialsError } = await supabase
-      .from('firmware_requests')
-      .select('id')
-      .overlaps('serial_numbers', form.serialNumbers)
-      .limit(1);
+    try {
+      const monthLabel = months.find(m => m.id === form.selectedMonth)?.label || form.selectedMonth;
+      
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          selectedMonth: monthLabel,
+          shippingCost: shippingCost
+        })
+      });
 
-    if (serialsError) {
-      console.error('Error checking serial numbers:', serialsError);
-    } else if (existingSerials && existingSerials.length > 0) {
-      alert('Um ou mais números de série informados já possuem uma solicitação registrada.');
-      setIsSubmitting(false);
-      return;
-    }
-    
-    const generatedProtocol = Math.random().toString(36).substring(7).toUpperCase();
-    setProtocolNumber(generatedProtocol);
-    
-    // Save to Supabase
-    const { error } = await supabase.from('firmware_requests').insert({
-      name: form.name,
-      client_phone: form.clientPhone.replace(/\D/g, ''),
-      email: form.email.toLowerCase().trim(),
-      serial_numbers: form.serialNumbers,
-      street: form.street,
-      number: form.number,
-      complement: form.complement,
-      neighborhood: form.neighborhood,
-      city: form.city,
-      state: form.state,
-      zip_code: form.zipCode.replace(/\D/g, ''),
-      observations: form.observations,
-      selected_month: months.find(m => m.id === form.selectedMonth)?.label || form.selectedMonth,
-      shipping_cost: shippingCost,
-      protocol_number: generatedProtocol
-    });
+      const result = await response.json();
 
-    if (error) {
-      setIsSubmitting(false);
-      // 23505 is PostgreSQL's unique_violation error code
-      if (error.code === '23505') {
-        alert('Já identificamos uma solicitação para este contato. É permitida apenas uma solicitação por cliente.');
-      } else {
-        alert('Ocorreu um erro ao enviar sua solicitação. Tente novamente mais tarde.');
-        console.error(error);
+      if (!response.ok) {
+        setIsSubmitting(false);
+        if (result.code === 'DUPLICATE_SERIAL') {
+          alert('Um ou mais números de série informados já possuem uma solicitação registrada.');
+        } else if (result.code === 'UNIQUE_VIOLATION') {
+          alert('Já identificamos uma solicitação para este contato. É permitida apenas uma solicitação por cliente.');
+        } else {
+          alert(result.error || 'Ocorreu um erro ao enviar sua solicitação. Tente novamente mais tarde.');
+        }
+        return;
       }
+
+      setProtocolNumber(result.protocol);
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      alert('Erro de conexão com o servidor. Tente novamente.');
+      setIsSubmitting(false);
       return;
     }
 

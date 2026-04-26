@@ -1,7 +1,13 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
+
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = express();
 app.use(express.json());
@@ -145,6 +151,93 @@ app.post('/api/frete', async (req, res) => {
       error: 'Não foi possível calcular o frete. Tente novamente.',
       details: error.message 
     });
+  }
+});
+
+// API Route: Get monthly capacities
+app.get('/api/capacities', async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('firmware_requests')
+      .select('selected_month, serial_numbers');
+
+    if (error) throw error;
+
+    const counts = data.reduce((acc: Record<string, number>, curr) => {
+      if (curr.selected_month) {
+        const numSerials = Array.isArray(curr.serial_numbers) ? curr.serial_numbers.length : 1;
+        acc[curr.selected_month] = (acc[curr.selected_month] || 0) + numSerials;
+      }
+      return acc;
+    }, {});
+
+    return res.json(counts);
+  } catch (error: any) {
+    console.error('[Server] Error fetching capacities:', error.message);
+    return res.status(500).json({ error: 'Erro ao buscar capacidades.' });
+  }
+});
+
+// API Route: Submit request
+app.post('/api/requests', async (req, res) => {
+  try {
+    const { 
+      name, clientPhone, email, serialNumbers, street, number, 
+      complement, neighborhood, city, state, zipCode, 
+      observations, selectedMonth, shippingCost 
+    } = req.body;
+
+    // Check for duplicate serial numbers
+    const { data: existingSerials, error: serialsError } = await supabase
+      .from('firmware_requests')
+      .select('id')
+      .overlaps('serial_numbers', serialNumbers)
+      .limit(1);
+
+    if (serialsError) throw serialsError;
+    
+    if (existingSerials && existingSerials.length > 0) {
+      return res.status(409).json({ 
+        error: 'Um ou mais números de série informados já possuem uma solicitação registrada.',
+        code: 'DUPLICATE_SERIAL'
+      });
+    }
+
+    const generatedProtocol = Math.random().toString(36).substring(7).toUpperCase();
+
+    // Save to Supabase
+    const { error } = await supabase.from('firmware_requests').insert({
+      name,
+      client_phone: clientPhone.replace(/\D/g, ''),
+      email: email.toLowerCase().trim(),
+      serial_numbers: serialNumbers,
+      street,
+      number,
+      complement,
+      neighborhood,
+      city,
+      state,
+      zip_code: zipCode.replace(/\D/g, ''),
+      observations,
+      selected_month: selectedMonth,
+      shipping_cost: shippingCost,
+      protocol_number: generatedProtocol
+    });
+
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(409).json({ 
+          error: 'Já identificamos uma solicitação para este contato. É permitida apenas uma solicitação por cliente.',
+          code: 'UNIQUE_VIOLATION'
+        });
+      }
+      throw error;
+    }
+
+    return res.json({ success: true, protocol: generatedProtocol });
+  } catch (error: any) {
+    console.error('[Server] Error submitting request:', error.message);
+    return res.status(500).json({ error: 'Erro ao processar solicitação.' });
   }
 });
 
