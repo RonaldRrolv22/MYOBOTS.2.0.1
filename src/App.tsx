@@ -143,16 +143,21 @@ export default function App() {
       const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!value) error = 'Email é obrigatório';
       else if (!regex.test(value)) error = 'Formato de email inválido';
+    } else if (name === 'clientPhone') {
+      const cleanPhone = value.replace(/\D/g, '');
+      if (!value) error = 'WhatsApp é obrigatório';
+      else if (/[^\d]/.test(value) || cleanPhone.length !== 11) error = 'O número de celular não é válido. Informe o DDD + número (apenas números)';
     } else if (name === 'zipCode') {
       const cleanCep = value.replace(/\D/g, '');
       if (!value) error = 'CEP é obrigatório';
-      else if (cleanCep.length !== 8) error = 'O CEP deve conter exatamente 8 números';
+      else if (/[^\d]/.test(value) || cleanCep.length !== 8) error = 'O CEP deve conter apenas 8 números';
+    } else if (name === 'number') {
+      if (!value) error = 'Número é obrigatório';
+      else if (/[^\d]/.test(value)) error = 'O campo número deve conter apenas números';
     } else if (!value && name !== 'selectedMonth') {
       const labels: Record<string, string> = {
         name: 'Nome',
-        clientPhone: 'WhatsApp',
         street: 'Logradouro',
-        number: 'Número',
         neighborhood: 'Bairro',
         city: 'Cidade',
         state: 'Estado',
