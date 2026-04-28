@@ -19,7 +19,11 @@ import {
   Mail,
   Hash,
   ArrowRight,
-  Phone
+  Phone,
+  User,
+  Copy,
+  QrCode,
+  AlertTriangle
 } from 'lucide-react';
 
 // Types
@@ -42,6 +46,7 @@ interface FormState {
   state: string;
   zipCode: string;
   observations: string;
+  cpfCnpj: string;
   selectedMonth: string | null;
 }
 
@@ -84,6 +89,7 @@ export default function App() {
     state: '',
     zipCode: '',
     observations: '',
+    cpfCnpj: '',
     selectedMonth: null
   });
 
@@ -91,6 +97,19 @@ export default function App() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  };
+  
+  // Payment State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pixData, setPixData] = useState<{ orderId: string, qrCodeUrl: string, qrCodeText: string } | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'checking' | 'expired'>('pending');
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
 
   // Scroll to top when showing form
   useEffect(() => {
@@ -154,6 +173,10 @@ export default function App() {
     } else if (name === 'number') {
       if (!value) error = 'Número é obrigatório';
       else if (/[^\d]/.test(value)) error = 'O campo número deve conter apenas números';
+    } else if (name === 'cpfCnpj') {
+      const clean = value.replace(/\D/g, '');
+      if (!value) error = 'CPF/CNPJ é obrigatório';
+      else if (clean.length !== 11 && clean.length !== 14) error = 'CPF deve ter 11 dígitos ou CNPJ 14 dígitos';
     } else if (!value && name !== 'selectedMonth' && name !== 'complement' && name !== 'observations') {
       const labels: Record<string, string> = {
         name: 'Nome',
@@ -267,6 +290,7 @@ export default function App() {
           city: 'Cidade',
           state: 'Estado',
           zipCode: 'CEP',
+          cpfCnpj: 'CPF/CNPJ',
           selectedMonth: 'Mês de Agendamento',
           complement: 'Complemento',
           observations: 'Observações'
@@ -333,9 +357,141 @@ export default function App() {
     
     setIsSubmitting(false);
     setIsSuccess(true);
+    setShowPaymentModal(false); // Close modal if it was open
     
     // Scroll to top to see success message
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleStartPayment = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    // Validation
+    const newErrors: Record<string, string> = {};
+    
+    form.serialNumbers.forEach((serial, index) => {
+      const err = validateSerialNumber(serial);
+      if (err) newErrors[`serialNumber_${index}`] = err;
+    });
+
+    Object.keys(form).forEach(key => {
+      if (key !== 'serialNumbers' && key !== 'selectedMonth') {
+        const err = validateField(key, (form as any)[key] || '');
+        if (err) newErrors[key] = err;
+      }
+    });
+
+    if (!form.selectedMonth) {
+      newErrors.selectedMonth = 'Por favor, selecione um mês para agendamento';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      alert('Por favor, preencha todos os campos obrigatórios corretamente.');
+      return;
+    }
+
+    if (!shippingCost) {
+      alert('Por favor, informe seu CEP para calcular o frete antes de prosseguir.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/payments/create-pix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: shippingCost,
+          name: form.name,
+          email: form.email,
+          cpfCnpj: form.cpfCnpj
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao gerar Pix');
+      }
+
+      setPixData(data);
+      setShowPaymentModal(true);
+      setPaymentStatus('pending');
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Polling for payment status
+  useEffect(() => {
+    let interval: any;
+    if (showPaymentModal && pixData && paymentStatus !== 'paid') {
+      interval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/payments/check/${pixData.orderId}`);
+          const data = await response.json();
+          if (data.isPaid) {
+            setPaymentStatus('paid');
+            clearInterval(interval);
+            // Finalize registration
+            finalizeRegistration();
+          }
+        } catch (error) {
+          console.error('Error checking payment:', error);
+        }
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [showPaymentModal, pixData, paymentStatus]);
+
+  const finalizeRegistration = async () => {
+    // Re-call the original submit logic but without validation since it's already done
+    // and passing a flag or just relying on the fact that payment was confirmed
+    // Actually I'll just call handleSubmit but I need to adapt it.
+    // I'll create a dedicated function for final save.
+    
+    setIsSubmitting(true);
+    
+    try {
+      const monthLabel = months.find(m => m.id === form.selectedMonth)?.label || form.selectedMonth;
+      
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          selectedMonth: monthLabel,
+          shippingCost: shippingCost,
+          paymentId: pixData?.orderId
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error || 'Erro ao salvar agendamento após pagamento. Por favor, contate o suporte com seu comprovante.');
+        return;
+      }
+
+      setProtocolNumber(result.protocol);
+      
+      // Update capacity locally
+      setMonths(prev => prev.map(m => 
+        m.id === form.selectedMonth ? { ...m, count: m.count + form.serialNumbers.length } : m
+      ));
+      
+      setIsSuccess(true);
+      setShowPaymentModal(false);
+    } catch (error) {
+      console.error('Error finalizing registration:', error);
+      alert('Erro de conexão. Seu pagamento foi recebido, mas o agendamento falhou. Contate o suporte.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -514,7 +670,7 @@ export default function App() {
                             <div>
                               <p className="font-bold text-[#1A1A1A] uppercase text-[10px] tracking-widest mb-1">Autorização de Envio</p>
                               <p className="text-sm text-[#6B6B6B] font-light leading-relaxed">
-                                Após o preenchimento do formulário, o seu agendamento estará concluído com sucesso. Uma semana antes do mês selecionado, você receberá sua autorização de envio para pagamento.
+                                Após o preenchimento do formulário e o pagamento do frete, o seu agendamento estará concluído com sucesso.
                               </p>
                             </div>
                           </div>
@@ -571,7 +727,7 @@ export default function App() {
                     </div>
                   </section>
 
-                  <form onSubmit={handleSubmit} className="space-y-10">
+                  <form onSubmit={handleStartPayment} className="space-y-10">
                     
                     {/* Section: Identificação */}
                     <div className="apple-card p-8">
@@ -625,6 +781,22 @@ export default function App() {
                             />
                             <Mail className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                             {errors.email && <span className="absolute -bottom-5 left-1 text-[10px] text-red-500 font-medium">{errors.email}</span>}
+                          </div>
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                          <label>CPF ou CNPJ (para pagamento)</label>
+                          <div className="relative">
+                            <input 
+                              type="text" 
+                              name="cpfCnpj"
+                              placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                              value={form.cpfCnpj}
+                              onChange={handleChange}
+                              className={errors.cpfCnpj ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : ''}
+                            />
+                            <User className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                            {errors.cpfCnpj && <span className="absolute -bottom-5 left-1 text-[10px] text-red-500 font-medium">{errors.cpfCnpj}</span>}
                           </div>
                         </div>
 
@@ -949,7 +1121,7 @@ export default function App() {
                     <div className="w-16 h-16 rounded-3xl bg-green-50 shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform border border-green-100">
                       <MessageSquare className="w-8 h-8 text-green-600" />
                     </div>
-                    <h5 className="font-display font-display font-black text-gray-800 text-lg mb-2">Suporte Técnico</h5>
+                    <h5 className="font-display font-display font-black text-gray-800 text-lg mb-2">Atendimento ao Cliente</h5>
                     <p className="text-sm text-gray-400 mb-8 font-medium leading-relaxed">
                       Dúvidas sobre o número de série ou processo de envio? Entre em contato com nosso time.
                     </p>
@@ -1005,6 +1177,85 @@ export default function App() {
                       Realizar nova solicitação
                       <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                     </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Payment Modal Overlay */}
+              <AnimatePresence>
+                {showPaymentModal && pixData && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1A1A1A]/80 backdrop-blur-sm"
+                  >
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl relative overflow-hidden"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-16 h-16 rounded-2xl neuro-gradient flex items-center justify-center text-white mb-6 shadow-lg shadow-neuro-blue/20">
+                          <QrCode className="w-8 h-8" />
+                        </div>
+                        
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Pagamento via Pix</h3>
+                        <p className="text-gray-500 text-sm mb-8">
+                          Para confirmar seu agendamento, realize o pagamento do frete no valor de <strong className="text-neuro-blue">{formatCurrency(shippingCost || 0)}</strong>
+                        </p>
+
+                        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-8 w-full flex flex-col items-center">
+                          <img 
+                            src={pixData.qrCodeUrl} 
+                            alt="QR Code Pix" 
+                            className="w-48 h-48 mb-4 shadow-sm bg-white p-2 rounded-xl"
+                          />
+                          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Status do Pagamento</p>
+                          <div className="flex items-center gap-2">
+                            {paymentStatus === 'paid' ? (
+                              <div className="flex items-center gap-1.5 text-green-600 font-bold text-sm">
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>PAGAMENTO CONFIRMADO</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-neuro-blue" />
+                                <span className="text-sm font-bold text-gray-600 uppercase tracking-tight">Aguardando confirmação...</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 w-full">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(pixData.qrCodeText);
+                              alert('Código Pix copiado com sucesso!');
+                            }}
+                            className="w-full h-14 rounded-2xl border-2 border-gray-100 flex items-center justify-center gap-3 font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-95"
+                          >
+                            <Copy className="w-5 h-5" />
+                            <span>COPIAR CÓDIGO PIX</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => setShowPaymentModal(false)}
+                            className="w-full py-2 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            Cancelar e voltar
+                          </button>
+                        </div>
+
+                        <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-100 flex gap-3 text-left">
+                          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                          <p className="text-[11px] text-amber-900 leading-relaxed">
+                            <strong>Atenção:</strong> O agendamento só será processado após a confirmação automática do pagamento. Não feche esta janela até a confirmação.
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
                   </motion.div>
                 )}
               </AnimatePresence>

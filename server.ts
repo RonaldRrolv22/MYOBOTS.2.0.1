@@ -1,22 +1,31 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
 
-dotenv.config();
+import fs from 'fs';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+if (fs.existsSync('.env.local')) {
+  dotenv.config({ path: '.env.local' });
+} else {
+  dotenv.config();
+}
+
+const SUPABASE_URL = process.env.SUPABASE_URL && process.env.SUPABASE_URL !== 'sua_url_supabase_aqui' ? process.env.SUPABASE_URL : 'https://bnlggvhmgynqdiyrydof.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY && process.env.SUPABASE_KEY !== 'sua_chave_anon_aqui' ? process.env.SUPABASE_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubGdndmhtZ3lucWRpeXJ5ZG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNzg2OTEsImV4cCI6MjA5Mjc1NDY5MX0.DE5ZKaJZ4OKK8N_v-USiDL3iMOdbEcZUEwWXgcx1KLU';
+const PAGARME_SECRET_KEY = process.env.PAGARME_SECRET_KEY || 'sk_n3oKn1RfbI5nAPgw';
+const PAGARME_ACCOUNT_ID = process.env.PAGARME_ACCOUNT_ID || 'acc_DGYK7ZjiJXIwP5Z3';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = express();
 app.use(express.json());
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Melhor Envio API configuration
-const MELHOR_ENVIO_TOKEN = process.env.MELHOR_ENVIO_TOKEN || '';
-const CEP_ORIGEM = process.env.CEP_ORIGEM || '50030917';
+const MELHOR_ENVIO_TOKEN = process.env.MELHOR_ENVIO_TOKEN && process.env.MELHOR_ENVIO_TOKEN !== 'seu_token_aqui' ? process.env.MELHOR_ENVIO_TOKEN : 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMjhiOTE4MTM3MDgyNzZjNTQ5NmZiMTIwNGFhNDY5OWIwZDUxM2VlMTUyYTE4M2E1NDMyNDRkMDAzZGNmMWFlNTdhZGI4MjcxOGQ2MDdlZjgiLCJpYXQiOjE3NzcyMDUyMDMuNjUxMjM5LCJuYmYiOjE3NzcyMDUyMDMuNjUxMjQxLCJleHAiOjE4MDg3NDEyMDMuNjM5MTQ3LCJzdWIiOiJhMWEyYzIzZS1jM2UxLTRlYzMtOTY0My0xMTYwZTk5NTU2ZmIiLCJzY29wZXMiOlsiY2FydC1yZWFkIiwiY2FydC13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiY29tcGFuaWVzLXdyaXRlIiwiY291cG9ucy1yZWFkIiwiY291cG9ucy13cml0ZSIsIm5vdGlmaWNhdGlvbnMtcmVhZCIsIm9yZGVycy1yZWFkIiwicHJvZHVjdHMtcmVhZCIsInByb2R1Y3RzLWRlc3Ryb3kiLCJwcm9kdWN0cy13cml0ZSIsInB1cmNoYXNlcy1yZWFkIiwic2hpcHBpbmctY2FsY3VsYXRlIiwic2hpcHBpbmctY2FuY2VsIiwic2hpcHBpbmctY2hlY2tvdXQiLCJzaGlwcGluZy1jb21wYW5pZXMiLCJzaGlwcGluZy1nZW5lcmF0ZSIsInNoaXBwaW5nLXByZXZpZXciLCJzaGlwcGluZy1wcmludCIsInNoaXBwaW5nLXNoYXJlIiwic2hpcHBpbmctdHJhY2tpbmciLCJlY29tbWVyY2Utc2hpcHBpbmciLCJ0cmFuc2FjdGlvbnMtcmVhZCIsInVzZXJzLXJlYWQiLCJ1c2Vycy13cml0ZSIsIndlYmhvb2tzLXJlYWQiLCJ3ZWJob29rcy13cml0ZSIsIndlYmhvb2tzLWRlbGV0ZSIsInRkZWFsZXItd2ViaG9vayJdfQ.AGN9f6VM92p2m7m6f7PNYFgNLTeA4TzeLB9cOHB7bQzShlqPugAoqQ0HgPJ0oI4LAX73WZ641K4q2FElGRjICnei5UG8vf59TtBTF1wJYmwikBI1KH7BqzxW56brnqYA5IGHWAEdbqL3fImtxr9RRGdjF7ogMPcBnAljYqlpLSMEwQcOetTjzn8f0sn-713jUan8GG_stDhZrD1VT2Lpx1GeSdsO4kd7gr6VaZaBwvU_Y8PWDCgO4ovmBaR6igAqiGZtGDzRCh1w1-2sTjQ2mKaEiEBAjEuLENcGGRaDRFOu5vyX_9nsKB7eiG8I1DYJ8rL4RqrEQ-jyFrdq4-bjy09BJnBnw9sbHa4y6ELwvubFd1fwGR-5ckvBNw67DdOlHIo0VrKItEKTu6XE7fpxN_PeL_LQTHH6inoTsGZe19i4ZibM5VJO0rtjMznp7DjtsLFZXWdM1WPntWHhgzHDwcBstx_PLcOBdXJJUCfoTZdM4Rxluhy6n9-M_knUBVI02KSpQTZXdKksSyZCO4SNCZt-57n6pfvl6I2uCHqr4Htbvfjez3cYrAvzrYehyGMsfgHVoi1_VFVHjD1KWswIJWegbo9yUNkM2x-YzQIEh70vP8ahblvRzqJx8ipQAXDFiSfG_cKpPw1xFp36BWXtHDYz82Tr_SWiC618CT5XvOw';
+const CEP_ORIGEM = process.env.CEP_ORIGEM && process.env.CEP_ORIGEM !== 'seu_cep_aqui' ? process.env.CEP_ORIGEM : '50030917';
 
 // Myobots equipment specs
 const PESO_KG = 0.34; // 340 gramas
@@ -154,6 +163,110 @@ app.post('/api/frete', async (req, res) => {
   }
 });
 
+/**
+ * Pagar.me Integration Endpoints
+ */
+
+// API Route: Create Pix Payment
+app.post('/api/payments/create-pix', async (req, res) => {
+  try {
+    const { amount, name, email, cpfCnpj } = req.body;
+
+    if (!amount || !name || !email || !cpfCnpj) {
+      return res.status(400).json({ error: 'Dados incompletos para gerar o Pix' });
+    }
+
+    if (!PAGARME_SECRET_KEY) {
+      return res.status(500).json({ error: 'Chave do Pagar.me não configurada' });
+    }
+
+    const auth = Buffer.from(`${PAGARME_SECRET_KEY}:`).toString('base64');
+    const cleanCpfCnpj = cpfCnpj.replace(/\D/g, '');
+
+    const orderData = {
+      items: [
+        {
+          amount: Math.round(amount * 100), // Pagar.me expects cents
+          description: 'Atualização de Firmware Myobots - Frete',
+          quantity: 1,
+          code: 'firmware-update-shipping'
+        }
+      ],
+      customer: {
+        name,
+        email: email.toLowerCase().trim(),
+        document: cleanCpfCnpj,
+        type: cleanCpfCnpj.length > 11 ? 'corporation' : 'individual'
+      },
+      payments: [
+        {
+          payment_method: 'pix',
+          pix: {
+            expires_in: 3600 // 1 hour
+          }
+        }
+      ]
+    };
+
+    const response = await axios.post('https://api.pagar.me/core/v5/orders', orderData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth}`
+      }
+    });
+
+    const charge = response.data.charges?.[0];
+    const pixInfo = charge?.last_transaction;
+
+    if (!pixInfo) {
+      throw new Error('Falha ao obter informações do Pix do Pagar.me');
+    }
+
+    return res.json({
+      orderId: response.data.id,
+      qrCodeUrl: pixInfo.qr_code_url,
+      qrCodeText: pixInfo.qr_code
+    });
+
+  } catch (error: any) {
+    console.error('[Pagar.me] Error creating Pix:', error.response?.data || error.message);
+    return res.status(500).json({ 
+      error: 'Não foi possível gerar o Pix. Verifique os dados e tente novamente.',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// API Route: Check Payment Status
+app.get('/api/payments/check/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    
+    if (!PAGARME_SECRET_KEY) {
+      return res.status(500).json({ error: 'Chave do Pagar.me não configurada' });
+    }
+
+    const auth = Buffer.from(`${PAGARME_SECRET_KEY}:`).toString('base64');
+    
+    const response = await axios.get(`https://api.pagar.me/core/v5/orders/${orderId}`, {
+      headers: {
+        'Authorization': `Basic ${auth}`
+      }
+    });
+
+    const status = response.data.status; // 'paid', 'pending', 'canceled', etc.
+    
+    return res.json({ 
+      status,
+      isPaid: status === 'paid'
+    });
+
+  } catch (error: any) {
+    console.error('[Pagar.me] Error checking payment:', error.response?.data || error.message);
+    return res.status(500).json({ error: 'Erro ao verificar status do pagamento' });
+  }
+});
+
 // API Route: Get monthly capacities
 app.get('/api/capacities', async (_req, res) => {
   try {
@@ -184,7 +297,7 @@ app.post('/api/requests', async (req, res) => {
     const { 
       name, clientPhone, email, serialNumbers, street, number, 
       complement, neighborhood, city, state, zipCode, 
-      observations, selectedMonth, shippingCost 
+      observations, selectedMonth, shippingCost, cpfCnpj, paymentId 
     } = req.body;
 
     // Check for duplicate serial numbers
@@ -221,7 +334,10 @@ app.post('/api/requests', async (req, res) => {
       observations,
       selected_month: selectedMonth,
       shipping_cost: shippingCost,
-      protocol_number: generatedProtocol
+      protocol_number: generatedProtocol,
+      cpf_cnpj: cpfCnpj.replace(/\D/g, ''),
+      payment_id: paymentId,
+      status_payment: 'approved'
     });
 
     if (error) {
