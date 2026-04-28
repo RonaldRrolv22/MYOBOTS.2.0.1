@@ -9,6 +9,7 @@ import QRCode from 'react-qr-code';
 import SerialNumberGuide from './components/SerialNumberGuide';
 import FreteCalculator from './components/FreteCalculator';
 import FirmwareReader, { FirmwareGateState } from './components/FirmwareReader';
+import FAQ from './components/FAQ';
 import { 
   MapPin, 
   Calendar, 
@@ -678,6 +679,11 @@ export default function App() {
                 <span className="relative z-10">SOLICITAR ATUALIZAÇÃO</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform relative z-10" />
               </motion.button>
+
+              <div className="w-full mt-12 text-left">
+                <FAQ />
+              </div>
+
             </motion.div>
           </motion.section>
         ) : (
