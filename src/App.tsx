@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import QRCode from 'react-qr-code';
 import SerialNumberGuide from './components/SerialNumberGuide';
 import FreteCalculator from './components/FreteCalculator';
+import FirmwareReader, { FirmwareGateState } from './components/FirmwareReader';
 import { 
   MapPin, 
   Calendar, 
@@ -98,6 +99,13 @@ export default function App() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [firmwareGate, setFirmwareGate] = useState<FirmwareGateState>({
+    bluetoothSupported: typeof navigator !== 'undefined' && !!(navigator as any).bluetooth,
+    connected: false,
+    isReading: false,
+    version: null,
+  });
+  const firmwareSectionRef = useRef<HTMLDivElement>(null);
   
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -372,10 +380,21 @@ export default function App() {
 
   const handleStartPayment = async (e: FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     const newErrors: Record<string, string> = {};
-    
+
+    // Firmware gate validation
+    if (!firmwareGate.bluetoothSupported) {
+      newErrors.firmware = 'Para verificar o firmware, use o Google Chrome ou Microsoft Edge em um computador (ou Android). Em iOS o Web Bluetooth não está disponível.';
+    } else if (!firmwareGate.connected) {
+      newErrors.firmware = 'Conecte seu Myobots via Bluetooth na seção acima antes de solicitar a atualização.';
+    } else if (firmwareGate.isReading) {
+      newErrors.firmware = 'Aguarde a leitura da versão do firmware ser concluída.';
+    } else if (firmwareGate.version === null) {
+      newErrors.firmware = 'Não foi possível ler a versão do firmware. Clique em atualizar ou reconecte o dispositivo.';
+    }
+
     form.serialNumbers.forEach((serial, index) => {
       const err = validateSerialNumber(serial);
       if (err) newErrors[`serialNumber_${index}`] = err;
@@ -394,7 +413,14 @@ export default function App() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      alert('Por favor, preencha todos os campos obrigatórios corretamente.');
+      if (newErrors.firmware) {
+        firmwareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        const firstSerialError = Object.keys(newErrors).find(k => k.startsWith('serialNumber_'));
+        if (firstSerialError) {
+          firmwareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
       return;
     }
 
@@ -850,7 +876,34 @@ export default function App() {
                           </div>
                         </div>
 
-                        <div className="md:col-span-2">
+                        <div className="md:col-span-2 space-y-6">
+                          <div
+                            ref={firmwareSectionRef}
+                            className={`rounded-3xl transition-all duration-200 ${errors.firmware ? 'ring-2 ring-red-300 ring-offset-2' : ''}`}
+                          >
+                            <FirmwareReader onFirmwareGateChange={(state) => {
+                              setFirmwareGate(state);
+                              if (state.connected && !state.isReading && state.version !== null) {
+                                setErrors(prev => {
+                                  if (!prev.firmware) return prev;
+                                  const next = { ...prev };
+                                  delete next.firmware;
+                                  return next;
+                                });
+                              }
+                            }} />
+                            {errors.firmware && (
+                              <motion.p
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-2 ml-1 text-[11px] text-red-600 font-medium flex items-center gap-1.5"
+                              >
+                                <AlertTriangle className="w-3 h-3 shrink-0" />
+                                {errors.firmware}
+                              </motion.p>
+                            )}
+                          </div>
+
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-gray-50/50 p-4 md:p-8 rounded-3xl border border-gray-100">
                             <div className="space-y-4">
                               <div className="flex items-center justify-between mb-4">
