@@ -190,10 +190,16 @@ app.post('/api/payments/create-pix', async (req, res) => {
     });
 
     const charge = response.data.charges?.[0];
+    
+    if (charge?.status === 'failed') {
+      const errorMsg = charge.last_transaction?.gateway_response?.errors?.[0]?.message || 'Transação recusada pelo Pagar.me (verifique CPF/CNPJ).';
+      throw new Error(`Pix falhou: ${errorMsg}`);
+    }
+
     const pixInfo = charge?.last_transaction;
 
-    if (!pixInfo) {
-      throw new Error('Falha ao obter informações do Pix do Pagar.me');
+    if (!pixInfo || !pixInfo.qr_code) {
+      throw new Error(`Falha ao obter QR Code do Pagar.me. Resposta do Gateway: ${JSON.stringify(charge)}`);
     }
 
     return res.json({

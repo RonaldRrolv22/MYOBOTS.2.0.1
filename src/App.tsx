@@ -411,16 +411,17 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: shippingCost,
-          name: form.name,
-          email: form.email,
-          cpfCnpj: form.cpfCnpj
+          name: form.name.trim(),
+          email: form.email.trim(),
+          cpfCnpj: form.cpfCnpj.replace(/\D/g, '')
         })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erro ao gerar Pix');
+        const errorMsg = data.details ? `${data.error}\nDetalhes: ${typeof data.details === 'string' ? data.details : JSON.stringify(data.details)}` : data.error;
+        throw new Error(errorMsg || 'Erro ao gerar Pix');
       }
 
       setPixData(data);
