@@ -1188,13 +1188,13 @@ export default function App() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1A1A1A]/80 backdrop-blur-sm"
+                    className="fixed inset-0 z-[100] flex justify-center p-4 bg-[#1A1A1A]/80 backdrop-blur-sm overflow-y-auto py-6 md:py-12"
                   >
                     <motion.div
                       initial={{ scale: 0.9, y: 20 }}
                       animate={{ scale: 1, y: 0 }}
                       exit={{ scale: 0.9, y: 20 }}
-                      className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl relative overflow-hidden"
+                      className="bg-white w-full max-w-md rounded-[32px] p-6 md:p-8 shadow-2xl relative my-auto"
                     >
                       <div className="flex flex-col items-center text-center">
                         <div className="w-16 h-16 rounded-2xl neuro-gradient flex items-center justify-center text-white mb-6 shadow-lg shadow-neuro-blue/20">
@@ -1208,9 +1208,13 @@ export default function App() {
 
                         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-8 w-full flex flex-col items-center">
                           <img 
-                            src={pixData.qrCodeUrl} 
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pixData.qrCodeText)}`} 
                             alt="QR Code Pix" 
                             className="w-48 h-48 mb-4 shadow-sm bg-white p-2 rounded-xl"
+                            onError={(e) => {
+                              // Fallback to the original URL if the API fails
+                              (e.target as HTMLImageElement).src = pixData.qrCodeUrl;
+                            }}
                           />
                           <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Status do Pagamento</p>
                           <div className="flex items-center gap-2">
