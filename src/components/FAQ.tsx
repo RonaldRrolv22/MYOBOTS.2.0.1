@@ -4,38 +4,6 @@ import { Plus, Minus } from 'lucide-react';
 
 const faqData = [
   {
-    question: "Como acessar o sistema de avaliação Myobots?",
-    answer: "O acesso é feito através de um navegador de Internet, no link https://app.myobots.com/ utilizando o mesmo login e senha utilizado no aplicativo Myobots. É possível utilizar o navegador de Internet em notebook, desktop, celular ou tablet Android. Em breve, estará disponível para iOS (ipad e celular), assim que a Apple finalizar a revisão do aplicativo que já foi submetido por nós."
-  },
-  {
-    question: "Quais protocolos de avaliação o sistema oferece?",
-    answer: "O software já vem configurado de forma automática com o protocolo de Glazer, que é o mais validado para o assoalho pélvico. Além disso, o sistema permite que você duplique, edite ou crie protocolos totalmente novos do zero, adicionando blocos de repouso, contração fásica, contração tônica, endurance e blocos personalizados, como por exemplo, testes de tosse ou esforço evacuatório."
-  },
-  {
-    question: "Caso meu atendimento não seja na área pélvica, é possível utilizar o módulo de avaliação?",
-    answer: "Sim, o módulo de avaliação pode ser utilizado em qualquer musculatura superficial do corpo. No relatório, serão exibidas todas as métricas relacionadas a diferentes tipos de contração e você poderá acompanhar a evolução do seu paciente no tratamento. Porém, no momento, os valores normativos da literatura para referência estão disponíveis apenas para a região pélvica. Em breve, serão lançados outros protocolos."
-  },
-  {
-    question: "Como o sistema mede a fadiga muscular de forma precisa?",
-    answer: "A forma mais validada na literatura de avaliar a fadiga é através da análise da frequência mediana da Eletromiografia. Em termos simples, esse dado revela a velocidade de disparo da musculatura. No início de cada contração, a frequência mediana tente a ser mais alta, pois tanto as fibras rápidas como as lentas estão com energia suficiente para ajudar na sustentação das contrações. Mas, assim que as fibras rápidas começam a fadigar, a frequência começa a reduzir, segundo a segundo. Portanto, o sistema analisa o declínio da frequência mediana, um indicador espectral que detecta o ritmo de disparo da musculatura e identifica a troca de fibras rápidas (que fadigam primeiro) por fibras lentas durante uma contração sustentada de endurance."
-  },
-  {
-    question: "O que o sistema avalia durante as contrações fásicas (rápidas)?",
-    answer: "O sistema marca automaticamente o início e o fim dos picos de contração para calcular o tempo de subida e o tempo de descida. O tempo de subida avalia o recrutamento muscular e a consciência corporal, enquanto o tempo de descida mede quanto tempo o músculo leva para relaxar e voltar ao repouso, o que é essencial para identificar casos de hipertonia. Você também tem total liberdade para editar essas marcações manualmente no relatório, se desejar."
-  },
-  {
-    question: "Como são gerados os relatórios da avaliação?",
-    answer: "Assim que a coleta termina, os dados são processados na nuvem e o relatório é gerado na mesma hora. O documento é dividido em blocos lógicos seguindo a ordem da sua avaliação, compara os resultados do paciente com valores normativos da literatura e traz textos de interpretação que são 100% editáveis."
-  },
-  {
-    question: "Posso exportar e compartilhar o laudo com o paciente?",
-    answer: "Sim. No final do relatório, você pode digitar um parecer clínico ou comentário final com suas observações. Com um clique, o sistema formata tudo em um documento PDF pronto para ser salvo, impresso e compartilhado com o paciente ou com a equipe multidisciplinar."
-  },
-  {
-    question: "Após a realização da sessão, é possível visualizar o gráfico completo com o sinal bruto dela?",
-    answer: "Sim, o Módulo de Avaliação tem uma funcionalidade de visualização do sinal de toda a sessão, após sua realização. Caso o Myobots tenha a versão do firmware atualizado, é possível visualizar esse gráfico nas opções: sinal bruto, envelope e suavizado. Sem a atualização do firmware é possível visualizar na versão suavizado."
-  },
-  {
     question: "A atualização é obrigatória para ter acesso à avaliação?",
     answer: "Não. Todos os Myobots são compatíveis com o novo programa. Com o novo software, será possível realizar relatórios automáticos para avaliar o repouso, contrações fásicas, tônicas, endurance ou outros testes personalizados. Mas, nós lançamos uma atualização gratuita no software interno do Myobots que permite o acesso a algumas métricas a mais, como: visualização do sinal bruto, cálculos de tempos de contração/relaxamento e fadiga através da análise de frequência mediana. Recomendamos que você teste a versão atual do seu aparelho para que possa decidir se/ou quando será necessário realizar a sua atualização."
   },
@@ -66,6 +34,38 @@ const faqData = [
   {
     question: "Existe alguma aula sobre o módulo de avaliação?",
     answer: "Sim, confira a aula de Bira Maciel sobre a autilização do módulo de avaliação: https://youtu.be/UxcnuGPz1NE"
+  },
+  {
+    question: "Como acessar o sistema de avaliação Myobots?",
+    answer: "O acesso é feito através de um navegador de Internet, no link https://app.myobots.com/ utilizando o mesmo login e senha utilizado no aplicativo Myobots. É possível utilizar o navegador de Internet em notebook, desktop, celular ou tablet Android. Em breve, estará disponível para iOS (ipad e celular), assim que a Apple finalizar a revisão do aplicativo que já foi submetido por nós."
+  },
+  {
+    question: "Quais protocolos de avaliação o sistema oferece?",
+    answer: "O software já vem configurado de forma automática com o protocolo de Glazer, que é o mais validado para o assoalho pélvico. Além disso, o sistema permite que você duplique, edite ou crie protocolos totalmente novos do zero, adicionando blocos de repouso, contração fásica, contração tônica, endurance e blocos personalizados, como por exemplo, testes de tosse ou esforço evacuatório."
+  },
+  {
+    question: "Caso meu atendimento não seja na área pélvica, é possível utilizar o módulo de avaliação?",
+    answer: "Sim, o módulo de avaliação pode ser utilizado em qualquer musculatura superficial do corpo. No relatório, serão exibidas todas as métricas relacionadas a diferentes tipos de contração e você poderá acompanhar a evolução do seu paciente no tratamento. Porém, no momento, os valores normativos da literatura para referência estão disponíveis apenas para a região pélvica. Em breve, serão lançados outros protocolos."
+  },
+  {
+    question: "Como o sistema mede a fadiga muscular de forma precisa?",
+    answer: "A forma mais validada na literatura de avaliar a fadiga é através da análise da frequência mediana da Eletromiografia. Em termos simples, esse dado revela a velocidade de disparo da musculatura. No início de cada contração, a frequência mediana tente a ser mais alta, pois tanto as fibras rápidas como as lentas estão com energia suficiente para ajudar na sustentação das contrações. Mas, assim que as fibras rápidas começam a fadigar, a frequência começa a reduzir, segundo a segundo. Portanto, o sistema analisa o declínio da frequência mediana, um indicador espectral que detecta o ritmo de disparo da musculatura e identifica a troca de fibras rápidas (que fadigam primeiro) por fibras lentas durante uma contração sustentada de endurance."
+  },
+  {
+    question: "O que o sistema avalia durante as contrações fásicas (rápidas)?",
+    answer: "O sistema marca automaticamente o início e o fim dos picos de contração para calcular o tempo de subida e o tempo de descida. O tempo de subida avalia o recrutamento muscular e a consciência corporal, enquanto o tempo de descida mede quanto tempo o músculo leva para relaxar e voltar ao repouso, o que é essencial para identificar casos de hipertonia. Você também tem total liberdade para editar essas marcações manualmente no relatório, se desejar."
+  },
+  {
+    question: "Como são gerados os relatórios da avaliação?",
+    answer: "Assim que a coleta termina, os dados são processados na nuvem e o relatório é gerado na mesma hora. O documento é dividido em blocos lógicos seguindo a ordem da sua avaliação, compara os resultados do paciente com valores normativos da literatura e traz textos de interpretação que são 100% editáveis."
+  },
+  {
+    question: "Posso exportar e compartilhar o laudo com o paciente?",
+    answer: "Sim. No final do relatório, você pode digitar um parecer clínico ou comentário final com suas observações. Com um clique, o sistema formata tudo em um documento PDF pronto para ser salvo, impresso e compartilhado com o paciente ou com a equipe multidisciplinar."
+  },
+  {
+    question: "Após a realização da sessão, é possível visualizar o gráfico completo com o sinal bruto dela?",
+    answer: "Sim, o Módulo de Avaliação tem uma funcionalidade de visualização do sinal de toda a sessão, após sua realização. Caso o Myobots tenha a versão do firmware atualizado, é possível visualizar esse gráfico nas opções: sinal bruto, envelope e suavizado. Sem a atualização do firmware é possível visualizar na versão suavizado."
   }
 ];
 
