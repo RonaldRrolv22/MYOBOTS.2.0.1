@@ -1266,8 +1266,9 @@ export default function App() {
                                 className="mx-auto"
                               />
                             ) : (
-                              <div className="w-48 h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-sm text-center p-4">
-                                QR Code Indisponível
+                              <div className="w-48 h-48 bg-gray-100 flex flex-col items-center justify-center text-gray-500 text-[10px] text-left p-4 overflow-auto break-all font-mono">
+                                <span className="text-red-500 font-bold mb-1">DEBUG INFO:</span>
+                                {pixData ? JSON.stringify(pixData, null, 2) : 'null'}
                               </div>
                             )}
                           </div>
