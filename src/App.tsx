@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useMemo, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import QRCode from 'react-qr-code';
 import SerialNumberGuide from './components/SerialNumberGuide';
 import FreteCalculator from './components/FreteCalculator';
 import { 
@@ -110,6 +111,12 @@ export default function App() {
   const [pixData, setPixData] = useState<{ orderId: string, qrCodeUrl: string, qrCodeText: string } | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'checking' | 'expired'>('pending');
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+
+  const getSafePixCode = () => {
+    if (!pixData) return '';
+    const code = pixData.qrCodeText || (pixData as any).qr_code_text || (pixData as any).qr_code || (pixData as any).pix_code;
+    return (code && code !== 'undefined') ? code : '';
+  };
 
   // Scroll to top when showing form
   useEffect(() => {
@@ -515,12 +522,9 @@ export default function App() {
   };
 
   const handleCopyPix = () => {
-    if (!pixData) return;
+    const code = getSafePixCode();
     
-    // Try different possible property names for maximum resilience
-    const code = pixData.qrCodeText || (pixData as any).qr_code_text || (pixData as any).qr_code || (pixData as any).pix_code;
-    
-    if (!code || code === 'undefined') {
+    if (!code) {
       alert('Não foi possível encontrar o código Pix. Por favor, tente gerar o pagamento novamente.');
       return;
     }
@@ -1251,15 +1255,22 @@ export default function App() {
                         </p>
 
                         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-8 w-full flex flex-col items-center">
-                          <img 
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pixData.qrCodeText)}`} 
-                            alt="QR Code Pix" 
-                            className="w-48 h-48 mb-4 shadow-sm bg-white p-2 rounded-xl"
-                            onError={(e) => {
-                              // Fallback to the original URL if the API fails
-                              (e.target as HTMLImageElement).src = pixData.qrCodeUrl;
-                            }}
-                          />
+                          <div className="mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-block">
+                            {getSafePixCode() ? (
+                              <QRCode
+                                value={getSafePixCode()}
+                                size={192} // 48 * 4 = 192px (equivalent to w-48 h-48)
+                                bgColor="#ffffff"
+                                fgColor="#000000"
+                                level="M"
+                                className="mx-auto"
+                              />
+                            ) : (
+                              <div className="w-48 h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-sm text-center p-4">
+                                QR Code Indisponível
+                              </div>
+                            )}
+                          </div>
                           <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Status do Pagamento</p>
                           <div className="flex items-center gap-2">
                             {paymentStatus === 'paid' ? (
@@ -1281,7 +1292,7 @@ export default function App() {
                             <input
                               type="text"
                               readOnly
-                              value={pixData.qrCodeText || (pixData as any).qr_code_text || (pixData as any).qr_code || ''}
+                              value={getSafePixCode()}
                               className="w-full h-12 bg-gray-50 border border-gray-200 rounded-xl px-4 text-[10px] font-mono text-gray-500 pr-12 focus:ring-0 cursor-default"
                               onClick={(e) => (e.target as HTMLInputElement).select()}
                             />
