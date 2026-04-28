@@ -413,7 +413,8 @@ export default function App() {
           amount: shippingCost,
           name: form.name.trim(),
           email: form.email.trim(),
-          cpfCnpj: form.cpfCnpj.replace(/\D/g, '')
+          cpfCnpj: form.cpfCnpj.replace(/\D/g, ''),
+          phone: form.clientPhone
         })
       });
 

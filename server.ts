@@ -170,9 +170,9 @@ app.post('/api/frete', async (req, res) => {
 // API Route: Create Pix Payment
 app.post('/api/payments/create-pix', async (req, res) => {
   try {
-    const { amount, name, email, cpfCnpj } = req.body;
+    const { amount, name, email, cpfCnpj, phone } = req.body;
 
-    if (!amount || !name || !email || !cpfCnpj) {
+    if (!amount || !name || !email || !cpfCnpj || !phone) {
       return res.status(400).json({ error: 'Dados incompletos para gerar o Pix' });
     }
 
@@ -182,6 +182,16 @@ app.post('/api/payments/create-pix', async (req, res) => {
 
     const auth = Buffer.from(`${PAGARME_SECRET_KEY}:`).toString('base64');
     const cleanCpfCnpj = cpfCnpj.replace(/\D/g, '');
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    let mobilePhone = undefined;
+    if (cleanPhone.length >= 10) {
+      mobilePhone = {
+        country_code: '55',
+        area_code: cleanPhone.substring(0, 2),
+        number: cleanPhone.substring(2)
+      };
+    }
 
     const orderData = {
       items: [
@@ -196,7 +206,8 @@ app.post('/api/payments/create-pix', async (req, res) => {
         name,
         email: email.toLowerCase().trim(),
         document: cleanCpfCnpj,
-        type: cleanCpfCnpj.length > 11 ? 'corporation' : 'individual'
+        type: cleanCpfCnpj.length > 11 ? 'corporation' : 'individual',
+        ...(mobilePhone && { phones: { mobile_phone: mobilePhone } })
       },
       payments: [
         {
