@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+.env.local
+server.ts
+test-correios.cjs
+deps
+.git
+.tempmediaStorage
+browser
+scratch
+artifacts
+knowledge
+metadata.json
+README.md
+package-lock.json

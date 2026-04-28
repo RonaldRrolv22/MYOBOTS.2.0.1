@@ -11,10 +11,10 @@ if (fs.existsSync('.env.local')) {
   dotenv.config();
 }
 
-const SUPABASE_URL = process.env.SUPABASE_URL && process.env.SUPABASE_URL !== 'sua_url_supabase_aqui' ? process.env.SUPABASE_URL : 'https://bnlggvhmgynqdiyrydof.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY && process.env.SUPABASE_KEY !== 'sua_chave_anon_aqui' ? process.env.SUPABASE_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubGdndmhtZ3lucWRpeXJ5ZG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNzg2OTEsImV4cCI6MjA5Mjc1NDY5MX0.DE5ZKaJZ4OKK8N_v-USiDL3iMOdbEcZUEwWXgcx1KLU';
-const PAGARME_SECRET_KEY = process.env.PAGARME_SECRET_KEY || 'sk_n3oKn1RfbI5nAPgw';
-const PAGARME_ACCOUNT_ID = process.env.PAGARME_ACCOUNT_ID || 'acc_DGYK7ZjiJXIwP5Z3';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+const PAGARME_SECRET_KEY = process.env.PAGARME_SECRET_KEY || '';
+const PAGARME_ACCOUNT_ID = process.env.PAGARME_ACCOUNT_ID || '';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -22,8 +22,8 @@ const app = express();
 app.use(express.json());
 
 // Melhor Envio API configuration
-const MELHOR_ENVIO_TOKEN = process.env.MELHOR_ENVIO_TOKEN && process.env.MELHOR_ENVIO_TOKEN !== 'seu_token_aqui' ? process.env.MELHOR_ENVIO_TOKEN : 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMjhiOTE4MTM3MDgyNzZjNTQ5NmZiMTIwNGFhNDY5OWIwZDUxM2VlMTUyYTE4M2E1NDMyNDRkMDAzZGNmMWFlNTdhZGI4MjcxOGQ2MDdlZjgiLCJpYXQiOjE3NzcyMDUyMDMuNjUxMjM5LCJuYmYiOjE3NzcyMDUyMDMuNjUxMjQxLCJleHAiOjE4MDg3NDEyMDMuNjM5MTQ3LCJzdWIiOiJhMWEyYzIzZS1jM2UxLTRlYzMtOTY0My0xMTYwZTk5NTU2ZmIiLCJzY29wZXMiOlsiY2FydC1yZWFkIiwiY2FydC13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiY29tcGFuaWVzLXdyaXRlIiwiY291cG9ucy1yZWFkIiwiY291cG9ucy13cml0ZSIsIm5vdGlmaWNhdGlvbnMtcmVhZCIsIm9yZGVycy1yZWFkIiwicHJvZHVjdHMtcmVhZCIsInByb2R1Y3RzLWRlc3Ryb3kiLCJwcm9kdWN0cy13cml0ZSIsInB1cmNoYXNlcy1yZWFkIiwic2hpcHBpbmctY2FsY3VsYXRlIiwic2hpcHBpbmctY2FuY2VsIiwic2hpcHBpbmctY2hlY2tvdXQiLCJzaGlwcGluZy1jb21wYW5pZXMiLCJzaGlwcGluZy1nZW5lcmF0ZSIsInNoaXBwaW5nLXByZXZpZXciLCJzaGlwcGluZy1wcmludCIsInNoaXBwaW5nLXNoYXJlIiwic2hpcHBpbmctdHJhY2tpbmciLCJlY29tbWVyY2Utc2hpcHBpbmciLCJ0cmFuc2FjdGlvbnMtcmVhZCIsInVzZXJzLXJlYWQiLCJ1c2Vycy13cml0ZSIsIndlYmhvb2tzLXJlYWQiLCJ3ZWJob29rcy13cml0ZSIsIndlYmhvb2tzLWRlbGV0ZSIsInRkZWFsZXItd2ViaG9vayJdfQ.AGN9f6VM92p2m7m6f7PNYFgNLTeA4TzeLB9cOHB7bQzShlqPugAoqQ0HgPJ0oI4LAX73WZ641K4q2FElGRjICnei5UG8vf59TtBTF1wJYmwikBI1KH7BqzxW56brnqYA5IGHWAEdbqL3fImtxr9RRGdjF7ogMPcBnAljYqlpLSMEwQcOetTjzn8f0sn-713jUan8GG_stDhZrD1VT2Lpx1GeSdsO4kd7gr6VaZaBwvU_Y8PWDCgO4ovmBaR6igAqiGZtGDzRCh1w1-2sTjQ2mKaEiEBAjEuLENcGGRaDRFOu5vyX_9nsKB7eiG8I1DYJ8rL4RqrEQ-jyFrdq4-bjy09BJnBnw9sbHa4y6ELwvubFd1fwGR-5ckvBNw67DdOlHIo0VrKItEKTu6XE7fpxN_PeL_LQTHH6inoTsGZe19i4ZibM5VJO0rtjMznp7DjtsLFZXWdM1WPntWHhgzHDwcBstx_PLcOBdXJJUCfoTZdM4Rxluhy6n9-M_knUBVI02KSpQTZXdKksSyZCO4SNCZt-57n6pfvl6I2uCHqr4Htbvfjez3cYrAvzrYehyGMsfgHVoi1_VFVHjD1KWswIJWegbo9yUNkM2x-YzQIEh70vP8ahblvRzqJx8ipQAXDFiSfG_cKpPw1xFp36BWXtHDYz82Tr_SWiC618CT5XvOw';
-const CEP_ORIGEM = process.env.CEP_ORIGEM && process.env.CEP_ORIGEM !== 'seu_cep_aqui' ? process.env.CEP_ORIGEM : '50030917';
+const MELHOR_ENVIO_TOKEN = process.env.MELHOR_ENVIO_TOKEN || '';
+const CEP_ORIGEM = process.env.CEP_ORIGEM || '50030917';
 
 // Myobots equipment specs
 const PESO_KG = 0.34; // 340 gramas
