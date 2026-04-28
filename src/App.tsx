@@ -509,8 +509,52 @@ export default function App() {
       state: '',
       zipCode: '',
       observations: '',
+      cpfCnpj: '',
       selectedMonth: null
     });
+  };
+
+  const handleCopyPix = () => {
+    if (!pixData) return;
+    
+    // Try different possible property names for maximum resilience
+    const code = pixData.qrCodeText || (pixData as any).qr_code_text || (pixData as any).qr_code || (pixData as any).pix_code;
+    
+    if (!code || code === 'undefined') {
+      alert('Não foi possível encontrar o código Pix. Por favor, tente gerar o pagamento novamente.');
+      return;
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(code)
+        .then(() => alert('Código Pix copiado com sucesso!'))
+        .catch(() => fallbackCopy(code));
+    } else {
+      fallbackCopy(code);
+    }
+  };
+
+  const fallbackCopy = (text: string) => {
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        alert('Código Pix copiado com sucesso!');
+      } else {
+        throw new Error('Falha ao copiar');
+      }
+    } catch (err) {
+      console.error('Erro ao copiar:', err);
+      alert('Não foi possível copiar automaticamente. Por favor, selecione o código e copie manualmente.');
+    }
   };
 
   return (
@@ -1233,12 +1277,26 @@ export default function App() {
                         </div>
 
                         <div className="space-y-4 w-full">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              readOnly
+                              value={pixData.qrCodeText || (pixData as any).qr_code_text || (pixData as any).qr_code || ''}
+                              className="w-full h-12 bg-gray-50 border border-gray-200 rounded-xl px-4 text-[10px] font-mono text-gray-500 pr-12 focus:ring-0 cursor-default"
+                              onClick={(e) => (e.target as HTMLInputElement).select()}
+                            />
+                            <button 
+                              onClick={handleCopyPix}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-neuro-blue hover:text-blue-600"
+                              title="Copiar Código"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+
                           <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(pixData.qrCodeText);
-                              alert('Código Pix copiado com sucesso!');
-                            }}
-                            className="w-full h-14 rounded-2xl border-2 border-gray-100 flex items-center justify-center gap-3 font-bold text-gray-700 hover:bg-gray-50 transition-all active:scale-95"
+                            onClick={handleCopyPix}
+                            className="w-full h-14 rounded-2xl neuro-gradient text-white flex items-center justify-center gap-3 font-bold shadow-lg shadow-neuro-blue/20 hover:shadow-neuro-blue/40 transition-all active:scale-95"
                           >
                             <Copy className="w-5 h-5" />
                             <span>COPIAR CÓDIGO PIX</span>
