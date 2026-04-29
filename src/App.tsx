@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import QRCode from 'react-qr-code';
 import SerialNumberGuide from './components/SerialNumberGuide';
@@ -561,6 +561,18 @@ export default function App() {
     }
   };
 
+  const handleFirmwareGateChange = useCallback((state: FirmwareGateState) => {
+    setFirmwareGate(state);
+    if (state.connected && !state.isReading && state.version !== null) {
+      setErrors(prev => {
+        if (!prev.firmware) return prev;
+        const next = { ...prev };
+        delete next.firmware;
+        return next;
+      });
+    }
+  }, []);
+
   const resetForm = () => {
     setIsSuccess(false);
     setForm({
@@ -918,17 +930,7 @@ export default function App() {
                             ref={firmwareSectionRef}
                             className={`rounded-3xl transition-all duration-200 ${errors.firmware ? 'ring-2 ring-red-300 ring-offset-2' : ''}`}
                           >
-                            <FirmwareReader onFirmwareGateChange={(state) => {
-                              setFirmwareGate(state);
-                              if (state.connected && !state.isReading && state.version !== null) {
-                                setErrors(prev => {
-                                  if (!prev.firmware) return prev;
-                                  const next = { ...prev };
-                                  delete next.firmware;
-                                  return next;
-                                });
-                              }
-                            }} />
+                            <FirmwareReader onFirmwareGateChange={handleFirmwareGateChange} />
                             {errors.firmware && (
                               <motion.p
                                 initial={{ opacity: 0, y: -4 }}
