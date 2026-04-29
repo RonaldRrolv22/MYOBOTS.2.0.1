@@ -26,7 +26,8 @@ import {
   User,
   Copy,
   QrCode,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-react';
 
 // Types
@@ -54,6 +55,18 @@ interface FormState {
 }
 
 const MAX_CAPACITY = 75;
+
+const PT_MONTHS: Record<string, number> = {
+  Janeiro: 0, Fevereiro: 1, 'Março': 2, Abril: 3,
+  Maio: 4, Junho: 5, Julho: 6, Agosto: 7,
+  Setembro: 8, Outubro: 9, Novembro: 10, Dezembro: 11,
+};
+
+function monthPeriod(label: string): number {
+  const [name, year] = label.split(' ');
+  return Number(year) * 12 + (PT_MONTHS[name] ?? 0);
+}
+
 const MONTHS_LIST = [
   "Maio 2026", "Junho 2026", "Julho 2026", "Agosto 2026", 
   "Setembro 2026", "Outubro 2026", "Novembro 2026", "Dezembro 2026",
@@ -107,6 +120,8 @@ export default function App() {
     version: null,
   });
   const firmwareSectionRef = useRef<HTMLDivElement>(null);
+  const faqRef = useRef<HTMLDivElement>(null);
+  const [faqVisible, setFaqVisible] = useState(false);
   
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -133,6 +148,22 @@ export default function App() {
       window.scrollTo(0, 0);
     }
   }, [showForm]);
+
+  // Track FAQ visibility to show/hide the floating anchor
+  useEffect(() => {
+    const el = faqRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setFaqVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToFaq = () => {
+    faqRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Fetch monthly capacities from backend
   useEffect(() => {
@@ -680,7 +711,7 @@ export default function App() {
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform relative z-10" />
               </motion.button>
 
-              <div className="w-full mt-12 text-left">
+              <div ref={faqRef} className="w-full mt-12 text-left">
                 <FAQ />
               </div>
 
@@ -1129,7 +1160,7 @@ export default function App() {
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {months.map((month) => {
+                        {months.filter(m => monthPeriod(m.label) >= new Date().getFullYear() * 12 + new Date().getMonth()).map((month) => {
                           const isFull = month.count + form.serialNumbers.length > MAX_CAPACITY;
                           const isSelected = form.selectedMonth === month.id;
                           const percentage = Math.min(100, (month.count / MAX_CAPACITY) * 100);
@@ -1404,6 +1435,30 @@ export default function App() {
               </div>
             </footer>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating FAQ anchor — only on hero screen, hides when FAQ enters viewport */}
+      <AnimatePresence>
+        {!faqVisible && !showForm && !isSuccess && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.25 }}
+            onClick={scrollToFaq}
+            aria-label="Ir para o FAQ"
+            className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-0.5 px-4 py-2.5 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg text-[#1A1A1A] text-xs font-semibold tracking-widest hover:shadow-xl transition-shadow cursor-pointer"
+          >
+            <motion.span
+              animate={{ y: [0, -4, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span>FAQ</span>
+              <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+            </motion.span>
+          </motion.button>
         )}
       </AnimatePresence>
 
