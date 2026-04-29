@@ -416,16 +416,7 @@ export default function App() {
     // Validation
     const newErrors: Record<string, string> = {};
 
-    // Firmware gate validation
-    if (!firmwareGate.bluetoothSupported) {
-      newErrors.firmware = 'Para verificar o firmware, use o Google Chrome ou Microsoft Edge em um computador (ou Android). Em iOS o Web Bluetooth não está disponível.';
-    } else if (!firmwareGate.connected) {
-      newErrors.firmware = 'Conecte seu Myobots via Bluetooth na seção acima antes de solicitar a atualização.';
-    } else if (firmwareGate.isReading) {
-      newErrors.firmware = 'Aguarde a leitura da versão do firmware ser concluída.';
-    } else if (firmwareGate.version === null) {
-      newErrors.firmware = 'Não foi possível ler a versão do firmware. Clique em atualizar ou reconecte o dispositivo.';
-    }
+    // Firmware gate validation foi removida para tornar a conexão opcional
 
     form.serialNumbers.forEach((serial, index) => {
       const err = validateSerialNumber(serial);
